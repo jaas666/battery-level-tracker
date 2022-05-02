@@ -10,6 +10,7 @@ const url = process.env.URL;
 let db;
 
 mongo.connect(
+
   url,
   {
     useNewUrlParser: true,
@@ -24,7 +25,6 @@ mongo.connect(
     users = db.collection(process.env.COLLECTION);
   }
 );
-
 app.use(express.json());
 
 // Users Section
@@ -54,31 +54,28 @@ app.get("/users/:userId", (req, res) => {
 });
 
 // [x]: Create a new Owner
-app.post("/users/adduser", async (req, res) => {
+app.post("/users/adduser", (req, res) => {
   const { firstName, lastName, email } = req.body;
 
-  users.findOne({ email: req.body.email }).then(user => {
-    if (user) {
-      return res.status(500).json("Email already exists");
-    } else {
-
-  users.insertOne(
-    {
-      firstName,
-      lastName,
-      email,
-    },
-    (err, result) => {
-      if (err) {
-        console.error(err);
-        res.status(500).json({ err: err });
-        return;
-      }
-      console.log(result);
-      res.status(200).json(result);
-    }
-  )
-}})});
+const dbEmail = users.findOne({ email: email } );
+console.log(await dbEmail)
+  // users.insertOne(
+  //   {
+  //     firstName,
+  //     lastName,
+  //     email,
+  //   },
+  //   (err, result) => {
+  //     if (err) {
+  //       console.error(err);
+  //       res.status(500).json({ err: err });
+  //       return;
+  //     }
+  //     console.log(result);
+  //     res.status(200).json(result);
+  //   }
+  // );
+});
 
 // [x]: Update the owner
 app.post("/users/edituser/:id", (req, res) => {
@@ -123,6 +120,24 @@ app.get("/devices/", (req, res) => {
     });
 });
 
+// [ ]: Retrieve a device
+// BUG Its returning the whole user record.
+// BUG Need to change path.
+// app.get("/devices/:deviceId", (req, res) => {
+//   const deviceId = req.params["deviceId"].toString();
+//   console.log(deviceId);
+//   users
+//     .find({ "devices.deviceId": ObjectId(deviceId) })
+//     //.project({ devices: 1, _id: 0 })
+//     .toArray((err, items) => {
+//       if (err) {
+//         console.error(err);
+//         res.status(500).json({ err: err });
+//         return;
+//       }
+//       res.status(200).json(items);
+//     });
+// });
 
 // [x]: List all owner device records
 app.get("/devices/:userId", (req, res) => {
@@ -193,31 +208,6 @@ app.delete("/devices/deletedevice/:deviceId", (req, res) => {
 
 
 // [ ]: Update the device record with a new Renewal record
-app.post("/devices/addDate/:deviceId", async (req, res) => {
-  const deviceId = req.params["deviceId"].toString();
-  const { date } = req.body;
-
-  users.updateOne(
-    { deviceId: ObjectId(deviceId) },
-    {
-      $push: {
-        devices: {
-          "lastRefill": new Date()
-        },
-      },
-    },
-    (err, result) => {
-      if (err) {
-        console.error(err);
-        res.status(500).json({ err: err });
-        return;
-      }
-      res.status(200).json(result);
-    }
-  );
-});
-
-
 // [ ]: List all device renewal records
 
 app.listen(3000, () => console.log("Server ready"));
